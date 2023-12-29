@@ -7,11 +7,18 @@
       />
 
       <div class="search-panel">
-        <SearchPanel />
-        <AppFilter />
+        <SearchPanel :updateTermHandler="updateTermHandler" />
+        <AppFilter
+          :updataFilterHandler="updataFilterHandler"
+          :filterName="filter"
+        />
       </div>
-      <MovieList :movies="movies" />
-      <AddMovie />
+      <MovieList
+        :movies="onFilterHandler(onSearchHandler(movies, term), filter)"
+        @onToggle="onToggleHandler"
+        @delete="deleteHandler"
+      />
+      <AddMovie @createFilm="createFilm" />
     </div>
   </div>
 </template>
@@ -38,22 +45,65 @@ export default {
           name: "Empire of Osman",
           viewers: 811,
           favourite: false,
-          like: true,
+          like: false,
+          id: 1,
         },
         {
           name: "Ertugrul",
           viewers: 411,
           favourite: false,
           like: false,
+          id: 2,
         },
         {
           name: "Omar",
           viewers: 711,
-          favourite: true,
+          favourite: false,
           like: false,
+          id: 3,
         },
       ],
+      term: "",
+      filter: "all",
     };
+  },
+  methods: {
+    createFilm(movie) {
+      this.movies.push(movie);
+    },
+    onToggleHandler({ id, prop }) {
+      this.movies = this.movies.map((movie) => {
+        if (movie.id === id) {
+          return { ...movie, [prop]: !movie[prop] };
+        }
+        return movie;
+      });
+    },
+    deleteHandler(id) {
+      this.movies = this.movies.filter((movie) => movie.id !== id);
+    },
+    onSearchHandler(arr, term) {
+      if (term.length === 0) {
+        return arr;
+      }
+      return arr.filter((item) => item.name.toLowerCase().indexOf(term) > -1);
+    },
+    onFilterHandler(arr, filter) {
+      switch (filter) {
+        case "popular":
+          return arr.filter((item) => item.like);
+        case "mostViewers":
+          return arr.filter((item) => item.viewers >= 500);
+        default:
+          return arr;
+      }
+    },
+    updateTermHandler(term) {
+      this.term = term;
+    },
+    updataFilterHandler(filter) {
+      this.filter = filter;
+    },
   },
 };
 </script>
