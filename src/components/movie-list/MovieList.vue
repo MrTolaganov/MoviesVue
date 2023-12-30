@@ -12,6 +12,7 @@
 
 <script>
 import MovieItem from "../movie-item/MovieItem.vue";
+
 export default {
   components: { MovieItem },
   props: {

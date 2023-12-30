@@ -5,15 +5,21 @@
         :moviesCount="movies.length"
         :favMovies="movies.filter((movie) => movie.favourite).length"
       />
-
-      <div class="search-panel">
+      <Box>
         <SearchPanel :updateTermHandler="updateTermHandler" />
         <AppFilter
           :updataFilterHandler="updataFilterHandler"
           :filterName="filter"
         />
-      </div>
+      </Box>
+      <Box v-if="isLoading">
+        <Loader />
+      </Box>
+      <Box v-else-if="!movies.length"
+        ><p class="text-center fs-3 text-danger">Kinolar yo'q</p></Box
+      >
       <MovieList
+        v-else
         :movies="onFilterHandler(onSearchHandler(movies, term), filter)"
         @onToggle="onToggleHandler"
         @delete="deleteHandler"
@@ -29,6 +35,7 @@ import SearchPanel from "../search-panel/SearchPanel.vue";
 import AppFilter from "../app-filter/AppFilter.vue";
 import MovieList from "../movie-list/MovieList.vue";
 import AddMovie from "../add-movie/AddMovie.vue";
+import axios from "axios";
 
 export default {
   components: {
@@ -40,31 +47,10 @@ export default {
   },
   data() {
     return {
-      movies: [
-        {
-          name: "Empire of Osman",
-          viewers: 811,
-          favourite: false,
-          like: false,
-          id: 1,
-        },
-        {
-          name: "Ertugrul",
-          viewers: 411,
-          favourite: false,
-          like: false,
-          id: 2,
-        },
-        {
-          name: "Omar",
-          viewers: 711,
-          favourite: false,
-          like: false,
-          id: 3,
-        },
-      ],
+      movies: [],
       term: "",
       filter: "all",
+      isLoading: false,
     };
   },
   methods: {
@@ -104,6 +90,29 @@ export default {
     updataFilterHandler(filter) {
       this.filter = filter;
     },
+    async fetchMovies() {
+      try {
+        const { data } = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts?_limit=10"
+        );
+        const films = data.map((film) => ({
+          id: film.id,
+          name: film.title,
+          favourite: false,
+          like: false,
+          viewers: film.id * 10,
+        }));
+        this.movies = films;
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+  },
+  mounted() {
+    this.isLoading = true;
+    this.fetchMovies();
   },
 };
 </script>
@@ -119,12 +128,5 @@ export default {
   background-color: #fff;
   margin: 0 auto;
   padding: 5rem 0;
-}
-.search-panel {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background-color: #fcfaf5;
-  border-radius: 4px;
-  box-shadow: 15px 15px 15px rgba(0, 0, 0, 0.15);
 }
 </style>

@@ -1,8 +1,8 @@
 <template>
-  <div class="app-info">
+  <Box>
     <p class="text-uppercase fs-3">Barcha kinolar soni: {{ moviesCount }}</p>
     <p class="text-uppercase fs-4">Ko'rilgan kinolar soni: {{ favMovies }}</p>
-  </div>
+  </Box>
 </template>
 
 <script>
@@ -20,12 +20,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.app-info {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background-color: #fcfaf5;
-  border-radius: 4px;
-  box-shadow: 15px 15px 15px rgba(0, 0, 0, 0.15);
-}
-</style>
+<style></style>
