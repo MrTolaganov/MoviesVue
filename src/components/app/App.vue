@@ -1,6 +1,7 @@
 <template>
   <div class="app font-monospace">
     <div class="content">
+      pageNumber
       <AppInfo
         :moviesCount="movies.length"
         :favMovies="movies.filter((movie) => movie.favourite).length"
@@ -24,18 +25,26 @@
         @onToggle="onToggleHandler"
         @delete="deleteHandler"
       />
+      <Box>
+        <Pagination
+          :totalPages="totalPages"
+          :page="page"
+          @changePage="changePage"
+        />
+      </Box>
       <AddMovie @createFilm="createFilm" />
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios";
 import AppInfo from "../app-info/AppInfo.vue";
 import SearchPanel from "../search-panel/SearchPanel.vue";
 import AppFilter from "../app-filter/AppFilter.vue";
 import MovieList from "../movie-list/MovieList.vue";
 import AddMovie from "../add-movie/AddMovie.vue";
-import axios from "axios";
+import Pagination from "../pagination/Pagination.vue";
 
 export default {
   components: {
@@ -44,6 +53,7 @@ export default {
     AppFilter,
     MovieList,
     AddMovie,
+    Pagination,
   },
   data() {
     return {
@@ -51,11 +61,22 @@ export default {
       term: "",
       filter: "all",
       isLoading: false,
+      limit: 10,
+      page: 1,
+      totalPages: 0,
     };
   },
   methods: {
-    createFilm(movie) {
-      this.movies.push(movie);
+    async createFilm(movie) {
+      try {
+        const response = await axios.post(
+          "https://jsonplaceholder.typicode.com/posts",
+          movie
+        );
+        this.movies.push(response.data);
+      } catch (error) {
+        alert(error.message);
+      }
     },
     onToggleHandler({ id, prop }) {
       this.movies = this.movies.map((movie) => {
@@ -65,8 +86,13 @@ export default {
         return movie;
       });
     },
-    deleteHandler(id) {
-      this.movies = this.movies.filter((movie) => movie.id !== id);
+    async deleteHandler(id) {
+      try {
+        await axios.delete(`https://jsonplaceholder.typicode.com/posts/${id}`);
+        this.movies = this.movies.filter((movie) => movie.id !== id);
+      } catch (error) {
+        alert(error.message);
+      }
     },
     onSearchHandler(arr, term) {
       if (term.length === 0) {
@@ -92,10 +118,17 @@ export default {
     },
     async fetchMovies() {
       try {
-        const { data } = await axios.get(
-          "https://jsonplaceholder.typicode.com/posts?_limit=10"
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts",
+          {
+            params: {
+              _limit: this.limit,
+              _page: this.page,
+            },
+          }
         );
-        const films = data.map((film) => ({
+
+        const films = response.data.map((film) => ({
           id: film.id,
           name: film.title,
           favourite: false,
@@ -103,16 +136,28 @@ export default {
           viewers: film.id * 10,
         }));
         this.movies = films;
+        this.totalPages = Math.ceil(
+          response.headers["x-total-count"] / this.limit
+        );
       } catch (error) {
         alert(error.message);
       } finally {
         this.isLoading = false;
       }
     },
+    changePage(pageNumber) {
+      this.page = pageNumber;
+      this.fetchMovies();
+    },
   },
   mounted() {
     this.isLoading = true;
     this.fetchMovies();
+  },
+  watch: {
+    page() {
+      this.fetchMovies();
+    },
   },
 };
 </script>
